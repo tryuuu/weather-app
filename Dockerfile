@@ -14,6 +14,8 @@ RUN go mod download
 # ソースコードをコピー
 COPY . .
 
+WORKDIR /app/cmd/server
+
 # アプリケーションをビルド
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o weather-app .
 
@@ -24,7 +26,7 @@ FROM alpine:latest
 WORKDIR /root/
 
 # ビルダーステージから実行ファイルをコピー
-COPY --from=builder /app/weather-app .
+COPY --from=builder /app/cmd/server .
 
 # ポート8080を公開
 EXPOSE 8080

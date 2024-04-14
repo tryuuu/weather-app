@@ -17,11 +17,7 @@ spec:
       containers:
       - name: weather-service
         image: weather-app:latest  # MinikubeのローカルDocker環境からイメージを使用
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
-        env:
-        - name: WEATHER_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: weather-api-key
-              key: api_key
+       

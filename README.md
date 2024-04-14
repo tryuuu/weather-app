@@ -9,4 +9,12 @@
 
 `kubectl apply -f k8s/service.yml`
 
+`kubectl delete -f k8s/deployment.yml`
+
+`kubectl delete -f k8s/service.yml`
+
 `minikube service list`
+
+`kubectl get pods`
+
+`minikube service weather-service --url`
