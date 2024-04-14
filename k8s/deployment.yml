@@ -1,14 +1,14 @@
 apiVersion: apps/v1
-kind: Deployment 
+kind: Deployment
 metadata:
-  name: weather-service # Deploymentの名前
+  name: weather-service
   labels:
-    app: weather-service # Podを選択するためのラベル
+    app: weather-service
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: weather-service # Podを選択するためのラベル
+      app: weather-service
   template:
     metadata:
       labels:
@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: weather-service
-        image: <ECR>/weather-service:latest
+        image: weather-app:latest  # MinikubeのローカルDocker環境からイメージを使用
         ports:
         - containerPort: 8080
         env:

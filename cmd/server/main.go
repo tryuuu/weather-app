@@ -1,19 +1,17 @@
-// http://localhost:8080/?city=TOKYO
-
 package main
 
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/joho/godotenv" // godotenv パッケージをインポート
+	"github.com/joho/godotenv"
 )
 
-// OpenWeatherMap API からの JSON 応答に合わせて設計された構造体
 type WeatherData struct {
 	Weather []struct {
 		Main        string `json:"main"`
@@ -25,26 +23,26 @@ type WeatherData struct {
 }
 
 func main() {
-	// .env ファイルから環境変数を読み込む
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}
-
-	// 環境変数からAPIキーを取得
 	apiKey := os.Getenv("OPENWEATHER_API_KEY")
 	if apiKey == "" {
 		log.Fatal("API key not set")
 	}
 
-	// HTTPサーバーの設定
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		city := r.URL.Query().Get("city")
+	http.HandleFunc("/", formHandler)
+	http.HandleFunc("/weather", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+			return
+		}
+		city := r.FormValue("city")
 		if city == "" {
 			http.Error(w, "Please specify a city", http.StatusBadRequest)
 			return
 		}
 		weatherInfo, err := getWeatherInfo(city, apiKey)
-		fmt.Printf("weatherInfo: %v\n", weatherInfo)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -59,15 +57,30 @@ func main() {
 	}
 }
 
-// getWeatherInfo はOpenWeatherMap APIから天気情報を取得する関数です。
+func formHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.New("form").Parse(`
+		<html>
+		<head>
+			<title>Weather App</title>
+		</head>
+		<body>
+			<form action="/weather" method="post">
+				<label for="city">都市名を入力してください:</label>
+				<input type="text" id="city" name="city">
+				<input type="submit" value="Get Weather">
+			</form>
+		</body>
+		</html>
+	`))
+	tmpl.Execute(w, nil)
+}
+
 func getWeatherInfo(city, apiKey string) (*WeatherData, error) {
 	url := fmt.Sprintf("http://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s&lang=ja&units=metric", city, apiKey)
 	resp, err := http.Get(url)
-	fmt.Println(resp)
 	if err != nil {
 		return nil, fmt.Errorf("request to OpenWeatherMap failed: %v", err)
 	}
-	// 関数が終了する際に必ずレスポンスのボディを閉じる
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -76,11 +89,9 @@ func getWeatherInfo(city, apiKey string) (*WeatherData, error) {
 	}
 
 	var data WeatherData
-	// バイト列のbodyを受け取り適切に変換しWeatherData型のdataポインタに格納する
 	if err := json.Unmarshal(body, &data); err != nil {
 		return nil, fmt.Errorf("unmarshaling failed: %v", err)
 	}
-	fmt.Println(data)
 
 	return &data, nil
 }
