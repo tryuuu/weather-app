@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment 
+metadata:
+  name: weather-service # Deploymentの名前
+  labels:
+    app: weather-service # Podを選択するためのラベル
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: weather-service # Podを選択するためのラベル
+  template:
+    metadata:
+      labels:
+        app: weather-service
+    spec:
+      containers:
+      - name: weather-service
+        image: <ECR>/weather-service:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: WEATHER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: weather-api-key
+              key: api_key

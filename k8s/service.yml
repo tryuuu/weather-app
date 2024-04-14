@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: weather-service
+spec:
+  selector:
+    app: weather-service # トラフィックを転送するPodを選択するためのラベル(Deploymentのmetadataで、labels.appと一致する必要がある)
+  ports:
+  - protocol: TCP
+    port: 80 # 外部に公開するポート
+    targetPort: 8080 # Pod内のコンテナがListenしているポート
+  type: LoadBalancer

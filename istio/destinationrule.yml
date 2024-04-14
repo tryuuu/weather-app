@@ -1,0 +1,13 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: weather-service # DestinationRuleの名前
+spec:
+  host: weather-service # トラフィックを転送するPodを選択するためのラベル(Deploymentのmetadataで、labels.appと一致する必要がある)
+  trafficPolicy:
+    loadBalanver:
+      simple: ROUND_ROBIN # ロードバランシングのアルゴリズム
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 1 
+        maxRequestsPerConnection: 1 
