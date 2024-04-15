@@ -10,8 +10,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-
-	"github.com/joho/godotenv"
 )
 
 type WeatherData struct {
@@ -26,9 +24,6 @@ type WeatherData struct {
 }
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	apiKey := os.Getenv("OPENWEATHER_API_KEY")
 	if apiKey == "" {
 		log.Fatal("API key not set")
@@ -49,6 +44,7 @@ func formHandler(w http.ResponseWriter, r *http.Request) {
 			<title>Weather App</title>
 		</head>
 		<body>
+		<h2>あああああああ</h2>
 			<form action="/weather" method="post">
 				<label for="cities">都市名をカンマ区切りで入力してください:</label>
 				<input type="text" id="cities" name="cities">

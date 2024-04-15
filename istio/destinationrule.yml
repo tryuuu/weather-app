@@ -4,6 +4,13 @@ metadata:
   name: weather-service # DestinationRuleの名前
 spec:
   host: weather-service # トラフィックを転送するPodを選択するためのラベル(Deploymentのmetadataで、labels.appと一致する必要がある)
+  subsets:
+  - name: v1 # バージョンv1のPodを選択
+    labels:
+      version: v1
+  - name: v2 # バージョンv2のPodを選択
+    labels:
+      version: v2
   trafficPolicy:
     loadBalanver:
       simple: ROUND_ROBIN # ロードバランシングのアルゴリズム

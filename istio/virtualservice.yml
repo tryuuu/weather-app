@@ -12,7 +12,18 @@ spec:
       - uri:
           exact: /
       route:
+      # カナリーデプロイメント
       - destination:
           host: weather-service # トラフィックを転送するPodを選択するためのラベル(Deploymentのmetadataで、labels.appと一致する必要がある)
+          subset: v1
           port:
             number: 8080
+          weight: 70 # バージョンv1のPodに70%のトラフィックを転送
+      - destination:
+          host: weather-service
+          subset: v2
+          port:
+            number: 8080
+        weight: 30 # バージョンv2のPodに30%のトラフィックを転送
+        
+

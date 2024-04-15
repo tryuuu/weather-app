@@ -1,23 +1,60 @@
+# 既存のDeploymentにバージョンラベルv1を追加
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: weather-service
+  name: weather-service-v1
   labels:
     app: weather-service
+    version: v1
 spec:
   replicas: 2
   selector:
     matchLabels:
       app: weather-service
+      version: v1
   template:
     metadata:
       labels:
         app: weather-service
+        version: v1
     spec:
       containers:
       - name: weather-service
-        image: weather-app:latest  # MinikubeのローカルDocker環境からイメージを使用
+        image: weather-app:v1  # MinikubeのローカルDocker環境からイメージを使用
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
-       
+        env:
+          - name: OPENWEATHER_API_KEY
+            value: "eeb5e018b6a1c71fe75391e7c6342faa"
+
+---
+# 新しいカナリーバージョンのDeploymentを追加
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-service-v2
+  labels:
+    app: weather-service
+    version: v2
+spec:
+  replicas: 1 # バージョンv2のPodを1つだけデプロイ
+  selector:
+    matchLabels:
+      app: weather-service
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: weather-service
+        version: v2
+    spec:
+      containers:
+      - name: weather-service
+        image: weather-app:v2  # 新バージョンのイメージ
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        env:
+          - name: OPENWEATHER_API_KEY
+            value: "eeb5e018b6a1c71fe75391e7c6342faa"
