@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"sync"
 
 	"github.com/joho/godotenv"
 )
@@ -20,6 +22,7 @@ type WeatherData struct {
 	Main struct {
 		Temperature float64 `json:"temp"`
 	} `json:"main"`
+	City string `json:"-"`
 }
 
 func main() {
@@ -37,18 +40,21 @@ func main() {
 			http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 			return
 		}
-		city := r.FormValue("city")
-		if city == "" {
-			http.Error(w, "Please specify a city", http.StatusBadRequest)
+		cities := r.FormValue("cities")
+		if cities == "" {
+			http.Error(w, "都市名を最低一つ入れてください。", http.StatusBadRequest)
 			return
 		}
-		weatherInfo, err := getWeatherInfo(city, apiKey)
+		cityList := strings.Split(cities, ",")
+		weatherInfos, err := getWeatherInfos(cityList, apiKey)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "天気情報の取得に失敗しました。", http.StatusInternalServerError)
 			return
 		}
-		response := fmt.Sprintf("Current weather in %s is: %s with %s, temperature is %.2f°C", city, weatherInfo.Weather[0].Main, weatherInfo.Weather[0].Description, weatherInfo.Main.Temperature)
-		fmt.Fprintln(w, response)
+		for _, weatherInfo := range weatherInfos {
+			response := fmt.Sprintf("現在の%sの天気は %s ,気温は %.2f°Cです。\n", weatherInfo.City, weatherInfo.Weather[0].Main, weatherInfo.Main.Temperature)
+			fmt.Fprintln(w, response)
+		}
 	})
 
 	fmt.Println("Starting server at port 8080...")
@@ -65,14 +71,52 @@ func formHandler(w http.ResponseWriter, r *http.Request) {
 		</head>
 		<body>
 			<form action="/weather" method="post">
-				<label for="city">都市名を入力してください:</label>
-				<input type="text" id="city" name="city">
-				<input type="submit" value="Get Weather">
+				<label for="cities">都市名をカンマ区切りで入力してください:</label>
+				<input type="text" id="cities" name="cities">
+				<input type="submit" value="天気を見る">
 			</form>
 		</body>
 		</html>
 	`))
 	tmpl.Execute(w, nil)
+}
+
+// 並列処理で複数の都市の天気情報を取得する
+func getWeatherInfos(cities []string, apiKey string) ([]*WeatherData, error) {
+	var wg sync.WaitGroup
+	ch := make(chan *WeatherData)
+	errCh := make(chan error)
+
+	for _, city := range cities {
+		wg.Add(1)
+		go func(city string) {
+			defer wg.Done()
+			data, err := getWeatherInfo(city, apiKey)
+			if err != nil {
+				errCh <- err
+				return
+			}
+			data.City = city
+			ch <- data
+		}(city)
+	}
+
+	go func() {
+		wg.Wait()
+		close(ch)
+		close(errCh)
+	}()
+
+	var weatherInfos []*WeatherData
+	for info := range ch {
+		weatherInfos = append(weatherInfos, info)
+	}
+
+	if len(errCh) > 0 {
+		return nil, <-errCh
+	}
+
+	return weatherInfos, nil
 }
 
 func getWeatherInfo(city, apiKey string) (*WeatherData, error) {
