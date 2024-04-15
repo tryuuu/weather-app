@@ -34,29 +34,8 @@ func main() {
 		log.Fatal("API key not set")
 	}
 
-	http.HandleFunc("/", formHandler)
-	http.HandleFunc("/weather", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-			return
-		}
-		cities := r.FormValue("cities")
-		if cities == "" {
-			http.Error(w, "都市名を最低一つ入れてください。", http.StatusBadRequest)
-			return
-		}
-		cityList := strings.Split(cities, ",")
-		weatherInfos, err := getWeatherInfos(cityList, apiKey)
-		if err != nil {
-			http.Error(w, "天気情報の取得に失敗しました。", http.StatusInternalServerError)
-			return
-		}
-		for _, weatherInfo := range weatherInfos {
-			response := fmt.Sprintf("現在の%sの天気は %s ,気温は %.2f°Cです。\n", weatherInfo.City, weatherInfo.Weather[0].Main, weatherInfo.Main.Temperature)
-			fmt.Fprintln(w, response)
-		}
-	})
-
+	http.HandleFunc("/", basicAuth(formHandler, "tryu", "k8s"))
+	http.HandleFunc("/weather", weatherHandler)
 	fmt.Println("Starting server at port 8080...")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
@@ -81,7 +60,42 @@ func formHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
-// 並列処理で複数の都市の天気情報を取得する
+// Basic認証を行うミドルウェア
+func basicAuth(handler http.HandlerFunc, username, password string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, pass, ok := r.BasicAuth()
+		if !ok || user != username || pass != password {
+			w.Header().Set("WWW-Authenticate", `Basic realm="restricted"`)
+			http.Error(w, "Unauthorized.", http.StatusUnauthorized)
+			return
+		}
+		handler(w, r)
+	}
+}
+
+func weatherHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+	cities := r.FormValue("cities")
+	if cities == "" {
+		http.Error(w, "都市名を最低一つ入れてください。", http.StatusBadRequest)
+		return
+	}
+	apiKey := os.Getenv("OPENWEATHER_API_KEY")
+	cityList := strings.Split(cities, ",")
+	weatherInfos, err := getWeatherInfos(cityList, apiKey)
+	if err != nil {
+		http.Error(w, "天気情報の取得に失敗しました。", http.StatusInternalServerError)
+		return
+	}
+	for _, weatherInfo := range weatherInfos {
+		response := fmt.Sprintf("現在の%sの天気は %s ,気温は %.2f°Cです。\n", weatherInfo.City, weatherInfo.Weather[0].Main, weatherInfo.Main.Temperature)
+		fmt.Fprintln(w, response)
+	}
+}
+
 func getWeatherInfos(cities []string, apiKey string) ([]*WeatherData, error) {
 	var wg sync.WaitGroup
 	ch := make(chan *WeatherData)
