@@ -1,29 +1,27 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: weather-service # VirtualServiceの名前
+  name: weather-service
+  namespace: development
 spec:
   hosts:
-   - "*" # 任意のホストからトラフィックを受け付ける
-   gateways:
-   - weather-gateway # Gatewayの名前
-   http:
-   - match:
-      - uri:
-          exact: /
-      route:
-      # カナリーデプロイメント
-      - destination:
-          host: weather-service # トラフィックを転送するPodを選択するためのラベル(Deploymentのmetadataで、labels.appと一致する必要がある)
-          subset: v1 # サブネットの名前(バージョンv1のPodを選択している)
-          port:
-            number: 8080
-          weight: 70 # バージョンv1のPodに70%のトラフィックを転送
-      - destination:
-          host: weather-service
-          subset: v2
-          port:
-            number: 8080
-        weight: 30 # バージョンv2のPodに30%のトラフィックを転送
-        
-
+  - "*"
+  gateways:
+  - istio-system/weather-gateway
+  http:
+  - match:
+    - uri:
+        exact: /
+    route:
+    - destination:
+        host: weather-service.development.svc.cluster.local
+        subset: v1
+        port:
+          number: 80
+      weight: 0
+    - destination:
+        host: weather-service.development.svc.cluster.local
+        subset: v2
+        port:
+          number: 80
+      weight: 100

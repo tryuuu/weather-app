@@ -62,7 +62,7 @@ func basicAuth(handler http.HandlerFunc, username, password string) http.Handler
 		user, pass, ok := r.BasicAuth()
 		if !ok || user != username || pass != password {
 			w.Header().Set("WWW-Authenticate", `Basic realm="restricted"`)
-			http.Error(w, "Unauthorized.", http.StatusUnauthorized)
+			http.Error(w, "v2-Unauthorized.", http.StatusUnauthorized)
 			return
 		}
 		handler(w, r)

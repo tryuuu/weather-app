@@ -2,11 +2,13 @@ apiVersion: v1
 kind: Service
 metadata:
   name: weather-service
+  namespace: development
 spec:
   selector:
-    app: weather-service # トラフィックを転送するPodを選択するためのラベル(Deploymentのmetadataで、labels.appと一致する必要がある)
+    app: weather-service
   ports:
-  - protocol: TCP
-    port: 80 # 外部に公開するポート
-    targetPort: 8080 # Pod内のコンテナがListenしているポート
+  - name: http  # Istioの推奨に従いポート名を追加
+    protocol: TCP
+    port: 80
+    targetPort: 8080
   type: LoadBalancer
