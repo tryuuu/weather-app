@@ -5,7 +5,7 @@ metadata:
   name: weather-service-v1
   labels:
     app: weather-service
-    version: v1
+    version: v1 # Deploymentのバージョンラベル
 spec:
   replicas: 2
   selector:
@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         app: weather-service
-        version: v1
+        version: v1 # Podのバージョンラベル(サービスメッシュのトラフィック管理に使われる)
     spec:
       containers:
       - name: weather-service

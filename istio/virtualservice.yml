@@ -15,7 +15,7 @@ spec:
       # カナリーデプロイメント
       - destination:
           host: weather-service # トラフィックを転送するPodを選択するためのラベル(Deploymentのmetadataで、labels.appと一致する必要がある)
-          subset: v1
+          subset: v1 # サブネットの名前(バージョンv1のPodを選択している)
           port:
             number: 8080
           weight: 70 # バージョンv1のPodに70%のトラフィックを転送
