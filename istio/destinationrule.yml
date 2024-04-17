@@ -1,20 +1,21 @@
+# Istioにおけるトラフィックポリシーとルーティングのルールを定義
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: weather-service
   namespace: development
 spec:
-  host: weather-service.development.svc.cluster.local
+  host: weather-service.development.svc.cluster.local # ルールが適用されるホスト名。k8sのService名を指定
   subsets:
   - name: v1
     labels:
-      version: v1
+      version: v1 # k8sのDeploymentのラベルを指定
   - name: v2
     labels:
       version: v2
   trafficPolicy:
     loadBalancer:
-      simple: ROUND_ROBIN
+      simple: LEAST_CONN
     connectionPool:
       http:
         http1MaxPendingRequests: 1 

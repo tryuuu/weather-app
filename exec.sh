@@ -16,8 +16,5 @@ kubectl apply -f istio/gateway.yml -n istio-system
 kubectl apply -f istio/destinationrule.yml -n development
 kubectl apply -f istio/virtualservice.yml -n development
 
-# Podの状態を表示
-kubectl get pods -n development
-
 # MinikubeのサービスURLを取得
 minikube service weather-service --url -n development
